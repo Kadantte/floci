@@ -26,6 +26,7 @@ import org.jboss.logging.Logger;
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.github.hectorvent.floci.config.EmulatorConfig;
 import io.github.hectorvent.floci.core.common.AwsArnUtils;
+import io.github.hectorvent.floci.core.common.Resettable;
 import io.github.hectorvent.floci.core.common.AwsException;
 import io.github.hectorvent.floci.core.common.AwsRegions;
 import io.github.hectorvent.floci.core.common.ContainerTeardown;
@@ -89,7 +90,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 
 @ApplicationScoped
-public class Ec2Service implements ContainerTeardown {
+public class Ec2Service implements ContainerTeardown, Resettable {
 
     private static final Logger LOG = Logger.getLogger(Ec2Service.class);
     private static final DateTimeFormatter ISO_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
@@ -4364,5 +4365,14 @@ public class Ec2Service implements ContainerTeardown {
         }
 
         return result;
+    }
+
+    /**
+     * Per-subnet IP allocation counters are in-memory; without clearing them, addresses handed out
+     * after a reset continue from the old high-water mark instead of restarting.
+     */
+    @Override
+    public void clear() {
+        subnetIpCounters.clear();
     }
 }
